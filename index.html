@@ -213,7 +213,7 @@
     gap:16px;min-height:0;min-width:0;padding:2px 0;
   }
   .wheel-wrap{
-    position:relative;width:min(640px,66vmin,calc(100dvh - 280px));
+    position:relative;width:min(700px,70vmin,calc(100dvh - 260px));
     aspect-ratio:1/1;flex:none;
   }
   .wheel-wrap canvas{display:block;width:100%;height:100%}
@@ -273,13 +273,13 @@
   @media (max-width:1180px){
     .layout{grid-template-columns:minmax(170px,200px) minmax(0,1fr) minmax(240px,300px)}
     .brand-mini h1{font-size:.9rem}
-    .wheel-wrap{width:min(560px,60vmin,calc(100dvh - 270px))}
+    .wheel-wrap{width:min(600px,64vmin,calc(100dvh - 260px))}
   }
   @media (max-width:980px){
     .game-screen{height:auto;min-height:100dvh;overflow:visible;padding:12px}
     .layout{display:flex;flex-direction:column;gap:12px}
     .stage{order:1;width:100%;padding-top:4px}
-    .wheel-wrap{width:min(90vw,460px);max-width:100%}
+    .wheel-wrap{width:min(92vw,500px);max-width:100%}
     .right-col{order:2;height:min(62vh,560px);overflow:visible;border-radius:var(--radius)}
     .history-panel{order:3;width:100%;max-height:none;min-height:0}
     .history-list{max-height:280px;flex:none}
@@ -293,7 +293,7 @@
     .medallion.small{width:32px;height:32px;font-size:.75rem}
     .tool{padding:8px;width:36px;height:36px;justify-content:center}
     .tool span{display:none}
-    .wheel-wrap{width:min(92vw,400px)}
+    .wheel-wrap{width:min(94vw,440px)}
     .result{min-height:70px}
     .spin{padding:12px 24px;font-size:.72rem;letter-spacing:.12em}
     .spin kbd{display:none}
@@ -303,7 +303,7 @@
     .preset{font-size:.62rem}
   }
   @media (max-height:720px) and (min-width:981px){
-    .wheel-wrap{width:min(560px,60vmin,calc(100dvh - 250px))}
+    .wheel-wrap{width:min(600px,64vmin,calc(100dvh - 240px))}
     .topbar{padding-bottom:8px}
     .result{min-height:68px}
     .spin{padding:11px 24px}
