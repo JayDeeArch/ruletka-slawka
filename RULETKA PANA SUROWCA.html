@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruletka Pana Surowca</title>
+    <style>
+        :root {
+            --dark-bg: #1a1a1a;
+            --gold: #d4af37;
+            --green: #27ae60;
+            --red: #e74c3c;
+            --blood-red: #8a0303;
+            --black-ui: #444;
+            --wheel-black: #2c3e50;
+            --white: #ecf0f1;
+            --panel-bg: #222;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--white);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #setup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: #222;
+            padding: 2rem;
+            border: 2px solid var(--gold);
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+            max-width: 450px;
+            width: 90%;
+        }
+
+        .modal h1 {
+            color: var(--gold);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        label { display: block; margin-bottom: 5px; color: var(--gold); font-size: 0.9rem; }
+
+        input {
+            padding: 10px;
+            font-size: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 8px;
+            border: 1px solid var(--gold);
+            background: #333;
+            color: white;
+        }
+
+        .btn-primary {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            background: var(--gold);
+            color: black;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        #game-container {
+            display: none;
+            flex-direction: row;
+            align-items: stretch;
+            justify-content: space-between;
+            width: 100vw;
+            height: 100vh;
+            padding: 10px;
+            box-sizing: border-box;
+            gap: 10px;
+        }
+
+        #side-panel, #right-panel {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            height: 100%;
+        }
+
+        .info-card {
+            background: var(--panel-bg);
+            border: 2px solid var(--gold);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .info-card h3 {
+            font-size: 1rem;
+            color: var(--gold);
+            margin: 0 0 10px 0;
+            text-align: center;
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+
+        .image-container {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 5px;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .stats-label {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .stats-values {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .stat-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .hot { background: var(--red); color: white; }
+        .cold { background: var(--black-ui); color: white; border: 1px solid #666; }
+
+        #history-panel {
+            flex-grow: 1;
+            background: var(--panel-bg);
+            border: 2px solid var(--gold);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        #history-panel h2 {
+            font-size: 1.2rem;
+            color: var(--gold);
+            margin-top: 0;
+            text-align: center;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+
+        #history-list {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        #history-list li {
+            padding: 8px;
+            border-bottom: 1px solid #333;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .main-game {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            flex-grow: 1;
+            padding: 10px 0;
+            min-width: 0;
+        }
+
+        .game-header {
+            text-align: center;
+        }
+
+        .game-header h1 {
+            color: var(--gold);
+            margin: 0;
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .game-header p {
+            margin: 2px 0 0 0;
+            font-size: 0.7rem;
+            color: #888;
+            letter-spacing: 1px;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-height: 70vh;
+            overflow: visible;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .controls-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding-bottom: 10px;
+        }
+
+        #result-display {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--gold);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            text-align: center;
+            min-height: 2.2rem;
+        }
+
+        .btn-spin {
+            padding: 15px 50px;
+            font-size: 1.4rem;
+            background: var(--green);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);
+        }
+
+        .btn-spin:disabled {
+            background: #555;
+            box-shadow: none;
+        }
+
+        .btn-edit-side {
+            background: #333;
+            color: var(--gold);
+            border: 2px solid var(--gold);
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            width: 100%;
+        }
+
+        .hist-red { color: var(--red); }
+        .hist-black { color: #888; }
+        .hist-zero { color: var(--green); }
+
+        @media (max-width: 1100px) {
+            #side-panel, #right-panel { width: 200px; }
+            .game-header h1 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="setup-overlay">
+        <div class="modal">
+            <h1>RULETKA PANA SUROWCA</h1>
+            <div class="input-group">
+                <label>Ilość ofiar:</label>
+                <input type="number" id="numInput" min="1" max="100" placeholder="Ilość ofiar">
+            </div>
+            <div class="input-group">
+                <label>Dodatkowe karne numery:</label>
+                <input type="text" id="penaltyInput" placeholder="wpisz liczby po przecinku">
+            </div>
+            <button class="btn-primary" onclick="startGame()">Zatwierdź i Graj</button>
+            <button id="closeEditBtn" class="btn-primary" style="display:none; background: #444; color: white;" onclick="hideSetup()">Anuluj</button>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <div id="side-panel">
+            <button class="btn-edit-side" onclick="showSetup(true)">⚙️ Edytuj numery</button>
+            <div id="history-panel">
+                <h2>Historia Ofiar</h2>
+                <ul id="history-list"></ul>
+            </div>
+        </div>
+
+        <div class="main-game">
+            <header class="game-header">
+                <h1 id="mainTitle">RULETKA PANA SUROWCA</h1>
+                <p>AUTORSTWA MŁODEGO BIGCHOPPY</p>
+            </header>
+            
+            <div class="canvas-wrapper">
+                <canvas id="rouletteCanvas" width="900" height="900"></canvas>
+            </div>
+            
+            <div class="controls-area">
+                <div id="result-display">Wciśnij przycisk, aby zacząć!</div>
+                <button id="spinBtn" class="btn-spin" onclick="startRolling()">PUŚĆ KULKĘ!</button>
+            </div>
+        </div>
+
+        <div id="right-panel">
+            <div class="info-card">
+                <h3>Analiza Numerów</h3>
+                <div style="margin-bottom:10px">
+                    <span class="stats-label">🔥 Gorące:</span>
+                    <div id="hot-numbers" class="stats-values">
+                        <span style="color: #666; font-size: 0.8rem;">Brak danych</span>
+                    </div>
+                </div>
+                <div>
+                    <span class="stats-label">❄️ Zimne:</span>
+                    <div id="cold-numbers" class="stats-values">
+                        <span style="color: #666; font-size: 0.8rem;">Brak danych</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>Udział Kolorów</h3>
+                <div style="margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px;">
+                        <span>Zielony (0)</span><span id="perc-zero">0%</span>
+                    </div>
+                    <div style="background: #333; height: 8px; border-radius: 4px; overflow: hidden;">
+                        <div id="bar-zero" style="height: 100%; width: 0%; transition: width 0.5s; background: var(--green);"></div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px;">
+                        <span>Czerwony</span><span id="perc-red">0%</span>
+                    </div>
+                    <div style="background: #333; height: 8px; border-radius: 4px; overflow: hidden;">
+                        <div id="bar-red" style="height: 100%; width: 0%; transition: width 0.5s; background: var(--red);"></div>
+                    </div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px;">
+                        <span>Czarny</span><span id="perc-black">0%</span>
+                    </div>
+                    <div style="background: #333; height: 8px; border-radius: 4px; overflow: hidden;">
+                        <div id="bar-black" style="height: 100%; width: 0%; transition: width 0.5s; background: var(--black-ui);"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="image-container">
+                <img src="surowiec.png" alt="Surowiec">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('rouletteCanvas');
+        const ctx = canvas.getContext('2d');
+        const resultDisplay = document.getElementById('result-display');
+        const spinBtn = document.getElementById('spinBtn');
+        const historyList = document.getElementById('history-list');
+        const hotContainer = document.getElementById('hot-numbers');
+        const coldContainer = document.getElementById('cold-numbers');
+        
+        const soundFiles = ['1.mp3', '2.mp3', '3.mp3', '4.mp3', '5.mp3'];
+        let currentSoundIndex = 0; // Licznik do odtwarzania po kolei
+        let currentWinSound = null;
+
+        // Generator dźwięku cykania (Beeper)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTick() {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+            
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.05);
+        }
+
+        let numbers = [];
+        let fullHistory = []; 
+        let isSpinning = false;
+        let isCaught = false; 
+        
+        let wheelRotation = 0;
+        let wheelSpeed = 0.003; 
+        
+        let ballAngle = -Math.PI / 1.41;
+        let ballSpeed = 0;
+        let ballRadiusProgress = 0; 
+        let ballBounce = 0; 
+        let relativeBallAngle = 0; 
+        let lastSlotIndex = -1;
+
+        const outerRadius = 380;
+        const innerRadius = 150;
+        const slotRadius = (outerRadius + innerRadius) / 2; 
+        const edgeRadius = outerRadius + 15; 
+
+        function showSetup(isEdit = false) {
+            if (isEdit) document.getElementById('closeEditBtn').style.display = 'block';
+            document.getElementById('setup-overlay').style.display = 'flex';
+        }
+
+        function hideSetup() {
+            document.getElementById('setup-overlay').style.display = 'none';
+        }
+
+        function startGame() {
+            const countValue = document.getElementById('numInput').value;
+            const penaltyRaw = document.getElementById('penaltyInput').value;
+            const count = parseInt(countValue);
+            numbers = [];
+            
+            if (!isNaN(count) && count >= 1) {
+                numbers.push(0);
+                for (let i = 1; i <= count; i++) numbers.push(i);
+            } else if (!isNaN(count) && count === 0) {
+                numbers.push(0);
+            }
+
+            if (penaltyRaw.trim() !== "") {
+                const penalties = penaltyRaw.split(',').map(n => n.trim()).filter(n => n !== "").map(n => parseInt(n)).filter(n => !isNaN(n));
+                numbers = [...numbers, ...penalties];
+            }
+
+            if (numbers.length === 0) return;
+            isCaught = false;
+            ballRadiusProgress = 0; 
+            ballAngle = -Math.PI / 2;
+            resultDisplay.style.color = "var(--gold)";
+            resultDisplay.innerHTML = "Wciśnij przycisk, aby zacząć!";
+            hideSetup();
+            document.getElementById('game-container').style.display = 'flex';
+            
+            if (!window.loopRunning) { 
+                window.loopRunning = true; 
+                gameLoop();
+            }
+        }
+
+        function draw() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const sliceAngle = (2 * Math.PI) / numbers.length;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, edgeRadius + 18, 0, Math.PI * 2);
+            ctx.strokeStyle = '#d4af37';
+            ctx.lineWidth = 10;
+            ctx.stroke();
+
+            const decorationCount = 8;
+            for (let d = 0; d < decorationCount; d++) {
+                const decAngle = (d * (2 * Math.PI / decorationCount)) + wheelRotation * 0.5;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, edgeRadius + 18, decAngle - 0.2, decAngle + 0.2);
+                ctx.strokeStyle = '#f1c40f';
+                ctx.lineWidth = 18; 
+                ctx.stroke();
+            }
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, edgeRadius + 13, 0, Math.PI * 2);
+            ctx.fillStyle = "#111";
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, edgeRadius + 5, 0, Math.PI * 2);
+            ctx.fillStyle = "#0a0a0a";
+            ctx.fill();
+
+            numbers.forEach((num, i) => {
+                const angle = i * sliceAngle + wheelRotation - Math.PI / 2;
+                ctx.fillStyle = num === 0 ? '#27ae60' : (i % 2 === 0 ? '#2c3e50' : '#c0392b');
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, outerRadius, angle, angle + sliceAngle);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.strokeStyle = '#d4af37';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(angle + sliceAngle / 2);
+                ctx.fillStyle = "white";
+                const fontSize = numbers.length > 40 ? 12 : (numbers.length > 20 ? 16 : 22);
+                ctx.font = `bold ${fontSize}px Arial`;
+                ctx.textAlign = "right";
+                ctx.fillText(num, outerRadius - 15, fontSize/3);
+                ctx.restore();
+            });
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, innerRadius, 0, Math.PI * 2);
+            ctx.fillStyle = '#111';
+            ctx.fill();
+            ctx.strokeStyle = '#d4af37';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            let finalBallAngle = isCaught ? (wheelRotation + relativeBallAngle) : ballAngle;
+            const currentBaseRadius = slotRadius + (edgeRadius - slotRadius) * ballRadiusProgress;
+            const ballX = centerX + Math.cos(finalBallAngle) * (currentBaseRadius + ballBounce);
+            const ballY = centerY + Math.sin(finalBallAngle) * (currentBaseRadius + ballBounce);
+
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, 12, 0, Math.PI * 2);
+            ctx.fillStyle = "#ffffff";
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(ballX - 4, ballY - 4, 3, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(255,255,255,0.8)";
+            ctx.fill();
+        }
+
+        function gameLoop() {
+            wheelRotation += wheelSpeed;
+
+            if (isSpinning) {
+                ballAngle += ballSpeed;
+                ballSpeed *= 0.993;
+
+                const sliceAngle = (2 * Math.PI) / numbers.length;
+                let currentRelativeAngle = (ballAngle - wheelRotation) % (2 * Math.PI);
+                if (currentRelativeAngle < 0) currentRelativeAngle += 2 * Math.PI;
+                let adjustedAngle = (currentRelativeAngle + Math.PI / 2) % (2 * Math.PI);
+                let currentSlotIndex = Math.floor(adjustedAngle / sliceAngle) % numbers.length;
+
+                if (currentSlotIndex !== lastSlotIndex) {
+                    playTick();
+                    lastSlotIndex = currentSlotIndex;
+                }
+
+                if (ballRadiusProgress > 0.5) {
+                    ballBounce = Math.abs(Math.sin(ballAngle * 15)) * (ballSpeed * 10);
+                } else {
+                    ballBounce *= 0.8;
+                }
+
+                if (ballSpeed < 0.15) {
+                    ballRadiusProgress = Math.max(0, ballRadiusProgress - 0.008);
+                }
+
+                if (ballSpeed < 0.005 && ballRadiusProgress <= 0) {
+                    stopRolling();
+                }
+            }
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function startRolling() {
+            if (isSpinning) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            if (currentWinSound) {
+                currentWinSound.pause();
+                currentWinSound.currentTime = 0;
+            }
+
+            isSpinning = true;
+            isCaught = false;
+            spinBtn.disabled = true;
+            resultDisplay.style.color = "var(--gold)";
+            resultDisplay.innerHTML = "LOSOWANIE..."; 
+            
+            ballRadiusProgress = 1;
+            ballSpeed = 0.25 + Math.random() * 0.08;
+            wheelSpeed = (Math.random() > 0.5 ? 0.01 : -0.01);
+            lastSlotIndex = -1;
+        }
+
+        function stopRolling() {
+            isSpinning = false;
+            isCaught = true;
+            spinBtn.disabled = false;
+            ballBounce = 0;
+            
+            const sliceAngle = (2 * Math.PI) / numbers.length;
+            let currentRelativeAngle = (ballAngle - wheelRotation) % (2 * Math.PI);
+            if (currentRelativeAngle < 0) currentRelativeAngle += 2 * Math.PI;
+            
+            let adjustedAngle = (currentRelativeAngle + Math.PI / 2) % (2 * Math.PI);
+            let slotIndex = Math.floor(adjustedAngle / sliceAngle) % numbers.length;
+            
+            relativeBallAngle = (slotIndex * sliceAngle + (sliceAngle / 2)) - Math.PI / 2;
+            calculateWinner(slotIndex);
+        }
+
+        function calculateWinner(index) {
+            const winningNumber = numbers[index];
+            
+            // Odtwarzanie dźwięku po kolei
+            const nextSoundFile = soundFiles[currentSoundIndex];
+            currentWinSound = new Audio(nextSoundFile);
+            currentWinSound.play().catch(e => console.log("Błąd dźwięku:", e));
+            
+            // Zwiększenie licznika i powrót do 0, jeśli przekroczy tablicę (po kolei 1,2,3,4)
+            currentSoundIndex = (currentSoundIndex + 1) % soundFiles.length;
+
+            let type = winningNumber === 0 ? "zero" : (index % 2 !== 0 ? "red" : "black");
+            fullHistory.push({ num: winningNumber, type: type });
+
+            if (winningNumber === 0) {
+                resultDisplay.style.color = "var(--blood-red)";
+                resultDisplay.innerHTML = `WYCIĄGAMY KARTECZKI!`;
+                addToHistory("Kartkówka", "hist-zero");
+            } else {
+                resultDisplay.style.color = "var(--gold)";
+                resultDisplay.innerHTML = `Ofiara: ${winningNumber}`;
+                addToHistory(winningNumber, type === "red" ? "hist-red" : "hist-black");
+            }
+            updateStats();
+        }
+
+        function addToHistory(val, className) {
+            const li = document.createElement('li');
+            li.textContent = val === "Kartkówka" ? val : `Nr ${val}`;
+            li.className = className;
+            historyList.prepend(li);
+        }
+
+        function updateStats() {
+            if (fullHistory.length === 0) return;
+            const counts = {};
+            numbers.forEach(n => counts[n] = 0);
+            fullHistory.forEach(item => counts[item.num] = (counts[item.num] || 0) + 1);
+            const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+            const hot = sorted.filter(entry => entry[1] > 0).slice(0, 3);
+            hotContainer.innerHTML = hot.length > 0 ? '' : '<span style="color: #666; font-size: 0.8rem;">Brak danych</span>';
+            hot.forEach(([num]) => {
+                const span = document.createElement('span'); span.className = 'stat-badge hot'; span.textContent = num; hotContainer.appendChild(span);
+            });
+
+            const cold = Object.entries(counts).sort((a, b) => a[1] - b[1]).slice(0, 3);
+            coldContainer.innerHTML = '';
+            cold.forEach(([num]) => {
+                const span = document.createElement('span'); span.className = 'stat-badge cold'; span.textContent = num; coldContainer.appendChild(span);
+            });
+
+            const total = fullHistory.length;
+            const zC = fullHistory.filter(h => h.type === "zero").length;
+            const rC = fullHistory.filter(h => h.type === "red").length;
+            const bC = fullHistory.filter(h => h.type === "black").length;
+
+            document.getElementById('perc-zero').textContent = Math.round((zC/total)*100) + "%";
+            document.getElementById('perc-red').textContent = Math.round((rC/total)*100) + "%";
+            document.getElementById('perc-black').textContent = Math.round((bC/total)*100) + "%";
+            document.getElementById('bar-zero').style.width = (zC/total)*100 + "%";
+            document.getElementById('bar-red').style.width = (rC/total)*100 + "%";
+            document.getElementById('bar-black').style.width = (bC/total)*100 + "%";
+        }
+    </script>
+</body>
+</html>
