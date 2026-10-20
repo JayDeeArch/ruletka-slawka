@@ -461,10 +461,16 @@
   function tick(volume) {
     if (!soundOn || !actx) return;
     var t = actx.currentTime;
-    var o = actx.createOscillator(), g = actx.createGain();
-    o.type = 'square'; o.frequency.setValueAtTime(1150 + Math.random() * 380, t);
-    g.gain.setValueAtTime(0.03 * volume, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
-    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + 0.06);
+    var o = actx.createOscillator();
+    var g = actx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(800, t);
+    g.gain.setValueAtTime(0.1, t);
+    g.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+    o.connect(g);
+    g.connect(actx.destination);
+    o.start(t);
+    o.stop(t + 0.05);
   }
   function playWin() {
     if (!soundOn) return; ensureAudio(); if (!actx) return;
