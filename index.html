@@ -201,12 +201,6 @@
     });
     // inner hub
     ctx.beginPath(); ctx.arc(centerX,centerY,innerRadius,0,Math.PI*2); ctx.fillStyle='#111'; ctx.fill(); ctx.strokeStyle='#d4af37'; ctx.lineWidth=4; ctx.stroke();
-    // ball fixed at pointer top, inside
-    const r=slotRadius;
-    const bx=centerX+Math.cos(-Math.PI/2)*r*0; // placeholder
-    // draw ball at top inside
-    const ballX=centerX, ballY=centerY- (innerRadius+ (outerRadius-innerRadius)*0.55);
-    ctx.beginPath(); ctx.arc(ballX,ballY,11,0,Math.PI*2); ctx.fillStyle="#ffffff"; ctx.fill();
     // pointer
     ctx.beginPath(); ctx.moveTo(centerX, centerY-outerRadius-2); ctx.lineTo(centerX-12,centerY-outerRadius-28); ctx.lineTo(centerX+12,centerY-outerRadius-28); ctx.closePath(); ctx.fillStyle='#d4af37'; ctx.fill();
   }
