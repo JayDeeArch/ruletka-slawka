@@ -756,10 +756,19 @@
     if (!state.numbers.length) return; resetSession(); toast('Wyczyszczono historię');
   });
   window.addEventListener('keydown', function (e) {
-    if (els.gameScreen.hidden) return;
-    if (e.code !== 'Space' && e.key !== ' ') return;
-    if (e.target.closest('input, textarea, select, button')) return;
-    e.preventDefault(); spin();
+    if (!els.gameScreen.hidden) {
+      if (e.code !== 'Space' && e.key !== ' ') return;
+      if (e.target.closest('input, textarea, select, button')) return;
+      e.preventDefault(); spin();
+      return;
+    }
+    if (els.setupScreen.hidden) return;
+    var isEnter = e.key === 'Enter';
+    var isSpace = e.code === 'Space' || e.key === ' ';
+    if (!isEnter && !isSpace) return;
+    if (isSpace && e.target.closest('input[type="text"], textarea')) return;
+    e.preventDefault();
+    els.setupForm.dispatchEvent(new Event('submit', { cancelable: true }));
   });
   if ('ResizeObserver' in window) {
     var ro = new ResizeObserver(function () { if (els.gameScreen.hidden) return; resizeCanvas(); draw(performance.now()); });
