@@ -377,9 +377,7 @@
         <div class="flash" id="flash" aria-hidden="true"></div>
       </div>
       <div class="result" aria-live="polite" aria-atomic="true">
-        <span class="result-label" id="resultLabel">Wynik losowania</span>
         <div class="result-text" id="resultText">Gotowi?</div>
-        <span class="result-meta" id="resultMeta"></span>
       </div>
       <button type="button" class="spin" id="spinBtn">
         <span id="spinLabel">Puść kulkę</span>
@@ -416,8 +414,7 @@
     setupScreen: $('#setupScreen'), gameScreen: $('#gameScreen'), setupForm: $('#setupForm'),
     victims: $('#victimsInput'), penalties: $('#penaltiesInput'), setupError: $('#setupError'),
     canvas: $('#wheel'), wheelWrap: $('#wheelWrap'), flash: $('#flash'),
-    resultText: $('#resultText'), resultMeta: $('#resultMeta'), resultLabel: $('#resultLabel'),
-    spinBtn: $('#spinBtn'), spinLabel: $('#spinLabel'),
+    resultText: $('#resultText'), spinBtn: $('#spinBtn'), spinLabel: $('#spinLabel'),
     historyList: $('#historyList'), historyEmpty: $('#historyEmpty'), historyCount: $('#historyCount'),
     soundBtn: $('#soundBtn'), editBtn: $('#editBtn'), resetBtn: $('#resetBtn'), toast: $('#toast')
   };
@@ -566,9 +563,7 @@
   }
   function setIdle() {
     var n = state.numbers.length;
-    els.resultLabel.textContent = 'Wynik losowania';
     els.resultText.className = 'result-text'; els.resultText.textContent = 'Gotowi?';
-    els.resultMeta.textContent = n ? n + ' ' + plural(n, 'numer', 'numery', 'numerów') + ' w kole' : '';
     draw(performance.now());
   }
 
@@ -707,9 +702,7 @@
     els.spinBtn.disabled = true; els.spinLabel.textContent = 'Losujemy…';
     els.spinBtn.setAttribute('aria-busy', 'true');
     els.wheelWrap.classList.add('spinning');
-    els.resultLabel.textContent = 'Mieszamy kołem';
     els.resultText.className = 'result-text spinning'; els.resultText.textContent = 'Losowanie…';
-    els.resultMeta.textContent = 'Koło się kręci…';
     startLoop();
   }
   function step(now) {
@@ -733,10 +726,8 @@
     var index = state.pending, num = state.numbers[index], type = colorType(num);
     state.history.push({ num: num, type: type, index: index });
     addHistory(num, type, state.history.length);
-    els.resultLabel.textContent = 'Wynik losowania';
     els.resultText.className = 'result-text';
     els.resultText.innerHTML = 'Ofiara <span class="num">' + num + '</span>';
-    els.resultMeta.textContent = 'numer ' + num + ', ' + (type === 'red' ? 'czerwony' : (type === 'green' ? 'zielony' : 'czarny')) + ' · ' + state.history.length + '. losowanie';
     els.resultText.classList.remove('pop'); void els.resultText.offsetWidth; els.resultText.classList.add('pop');
     els.flash.classList.remove('show'); void els.flash.offsetWidth; els.flash.classList.add('show');
     els.spinBtn.disabled = false; els.spinBtn.removeAttribute('aria-busy');
