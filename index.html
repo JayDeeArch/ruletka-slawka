@@ -324,13 +324,12 @@
     </div>
     <form id="setupForm" novalidate>
       <div class="field">
-        <label for="victimsInput">Ilość ofiar <span>1–100</span></label>
-        <input id="victimsInput" type="number" inputmode="numeric" min="1" max="100" step="1" value="20" autocomplete="off">
+        <label for="victimsInput">Ilość ofiar <span>1–50</span></label>
+        <input id="victimsInput" type="number" inputmode="numeric" min="1" max="50" step="1" value="20" autocomplete="off">
       </div>
       <div class="field">
         <label for="penaltiesInput">Dodatkowe karne numery <span>opcjonalnie</span></label>
         <input id="penaltiesInput" type="text" placeholder="np. 13, 21, 66" autocomplete="off" spellcheck="false">
-        <p class="hint">Numery spoza zakresu 1–N. Duplikaty pomijane.</p>
       </div>
       <p class="error" id="setupError" role="alert" hidden></p>
       <button type="submit" class="cta">Zatwierdź i graj</button>
@@ -492,7 +491,7 @@
   function showError(message) { els.setupError.textContent = message; els.setupError.hidden = false; }
   function readSetup() {
     var count = Number(els.victims.value);
-    if (!Number.isInteger(count) || count < 1 || count > 100) return { error: 'Podaj liczbę ofiar od 1 do 100.' };
+    if (!Number.isInteger(count) || count < 1 || count > 50) return { error: 'Podaj liczbę ofiar od 1 do 50.' };
     var raw = els.penalties.value.trim();
     var tokens = raw ? raw.split(/[\s,;]+/).filter(Boolean) : [];
     var penalties = [], bad = [];
@@ -516,7 +515,7 @@
       var raw = localStorage.getItem(SETUP_KEY);
       if (!raw) return null;
       var cfg = JSON.parse(raw);
-      if (!cfg || !Number.isInteger(cfg.count) || cfg.count < 1 || cfg.count > 100) return null;
+      if (!cfg || !Number.isInteger(cfg.count) || cfg.count < 1 || cfg.count > 50) return null;
       if (!Array.isArray(cfg.penalties)) cfg.penalties = [];
       cfg.penalties = cfg.penalties.filter(function (n) { return Number.isInteger(n) && n >= 1 && n <= 999; });
       return cfg;
@@ -630,16 +629,18 @@
     g.fillStyle = depth; g.beginPath(); g.arc(0, 0, R * 0.99, 0, TAU); g.fill();
     g.restore();
     /* numbers */
-    var midR = R * 0.85;
+    var midR = R * 0.88;
     var chord = 2 * midR * Math.sin(slice / 2);
-    var fontSize = clamp(chord * 0.6, 7, 24);
+    var fontSize = clamp(chord * 0.62, 8, 22);
     g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.font = '600 ' + fontSize.toFixed(2) + 'px "Segoe UI", system-ui, Arial, sans-serif';
+    g.font = '700 ' + fontSize.toFixed(2) + 'px "Segoe UI", system-ui, Arial, sans-serif';
+    g.lineWidth = Math.max(1.2, fontSize * 0.12);
+    g.strokeStyle = 'rgba(0,0,0,.75)';
     for (var j = 0; j < n; j++) {
       var label = String(state.numbers[j]);
       var angle = j * slice - Math.PI / 2 + slice / 2;
       g.save(); g.rotate(angle);
-      g.fillStyle = 'rgba(0,0,0,.45)'; g.fillText(label, midR + 0.8, 0.8);
+      g.strokeText(label, midR, 0);
       g.fillStyle = '#f2f2f4'; g.fillText(label, midR, 0);
       g.restore();
     }
