@@ -199,6 +199,7 @@
   .dot{width:7px;height:7px;border-radius:50%;flex:none}
   li.red .dot{background:var(--red)}
   li.black .dot{background:var(--black);border:1px solid var(--line-strong)}
+  li.green .dot{background:#2e9e6b}
   .hist-label{font-size:.78rem;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text);white-space:nowrap}
   .hist-tag{margin-left:auto;font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);white-space:nowrap}
   .hist-seq{font-size:.54rem;color:var(--muted-2);font-variant-numeric:tabular-nums}
@@ -324,17 +325,7 @@
     <form id="setupForm" novalidate>
       <div class="field">
         <label for="victimsInput">Ilość ofiar <span>1–100</span></label>
-        <div class="stepper">
-          <button type="button" class="step-btn" data-step="-1" aria-label="Zmniejsz">−</button>
-          <input id="victimsInput" type="number" inputmode="numeric" min="1" max="100" step="1" value="20" autocomplete="off">
-          <button type="button" class="step-btn" data-step="1" aria-label="Zwiększ">+</button>
-        </div>
-        <div class="presets" id="presets">
-          <button type="button" class="preset" data-count="10">10</button>
-          <button type="button" class="preset" data-count="20">20</button>
-          <button type="button" class="preset" data-count="50">50</button>
-          <button type="button" class="preset" data-count="100">100</button>
-        </div>
+        <input id="victimsInput" type="number" inputmode="numeric" min="1" max="100" step="1" value="20" autocomplete="off">
       </div>
       <div class="field">
         <label for="penaltiesInput">Dodatkowe karne numery <span>opcjonalnie</span></label>
@@ -343,7 +334,6 @@
       </div>
       <p class="error" id="setupError" role="alert" hidden></p>
       <button type="submit" class="cta">Zatwierdź i graj</button>
-      <button type="button" class="ghost" id="cancelEditBtn" hidden>Anuluj edycję</button>
     </form>
   </div>
 </section>
@@ -425,7 +415,6 @@
   var els = {
     setupScreen: $('#setupScreen'), gameScreen: $('#gameScreen'), setupForm: $('#setupForm'),
     victims: $('#victimsInput'), penalties: $('#penaltiesInput'), setupError: $('#setupError'),
-    cancelEditBtn: $('#cancelEditBtn'), presets: $('#presets'),
     canvas: $('#wheel'), wheelWrap: $('#wheelWrap'), flash: $('#flash'),
     resultText: $('#resultText'), resultMeta: $('#resultMeta'), resultLabel: $('#resultLabel'),
     spinBtn: $('#spinBtn'), spinLabel: $('#spinLabel'),
@@ -435,7 +424,7 @@
 
   var state = {
     config: { count: 20, penalties: [] }, numbers: [], history: [], slice: TAU,
-    size: 0, dpr: 1, R: 0, wheelAngle: 0, ballAngle: -Math.PI / 2, ballRf: 0.74,
+    size: 0, dpr: 1, R: 0, wheelAngle: 0, ballAngle: -Math.PI / 2,
     spinning: false, pending: -1, spinStart: 0, spinDur: 0, startWheel: 0, targetWheel: 0,
     lastTickSlot: -1, lastTickAt: 0, p: 0, wheelLayer: null, raf: 0
   };
@@ -455,7 +444,7 @@
     if (cryptoObj && cryptoObj.getRandomValues) { cryptoObj.getRandomValues(randBuf); return randBuf[0] / 0x100000000; }
     return Math.random();
   }
-  function colorType(num) { return num % 2 === 1 ? 'red' : 'black'; }
+  function colorType(num) { if (num === 0) return 'green'; return num % 2 === 1 ? 'red' : 'black'; }
   function plural(n, one, few, many) {
     if (n === 1) return one;
     var d = n % 10, h = n % 100;
@@ -510,11 +499,11 @@
     var penalties = [], bad = [];
     tokens.forEach(function (token) {
       var n = Number(token);
-      if (!Number.isInteger(n) || n < 1 || n > 999) bad.push(token);
-      else if (penalties.indexOf(n) === -1) penalties.push(n);
+      if (!Number.isInteger(n) || n < 0 || n > 999) bad.push(token);
+      else if (n !== 0 && penalties.indexOf(n) === -1) penalties.push(n);
     });
-    if (bad.length) return { error: 'Nieprawidłowe numery: ' + bad.slice(0, 6).join(', ') + '. Podaj liczby całkowite 1–999.' };
-    var numbers = [];
+    if (bad.length) return { error: 'Nieprawidłowe numery: ' + bad.slice(0, 6).join(', ') + '. Podaj liczby całkowite 0–999.' };
+    var numbers = [0];
     for (var i = 1; i <= count; i++) numbers.push(i);
     penalties.forEach(function (n) { if (numbers.indexOf(n) === -1) numbers.push(n); });
     if (numbers.length > MAX_NUMBERS) return { error: 'Za dużo numerów w kole (maks. ' + MAX_NUMBERS + ').' };
@@ -542,7 +531,6 @@
     els.victims.value = result.count;
     els.penalties.value = result.penalties.join(', ');
     els.setupError.hidden = true;
-    els.cancelEditBtn.hidden = true;
     els.setupScreen.hidden = true;
     els.gameScreen.hidden = false;
     resetSession();
@@ -553,7 +541,6 @@
   function openSetup(editing) {
     stopLoop();
     els.gameScreen.hidden = true; els.setupScreen.hidden = false;
-    els.cancelEditBtn.hidden = !editing;
     if (editing) { els.victims.value = state.config.count; els.penalties.value = state.config.penalties.join(', '); }
   }
   function cancelEdit() {
@@ -563,7 +550,7 @@
     requestAnimationFrame(function () { resizeCanvas(); draw(performance.now()); });
   }
   function resetSession() {
-    state.history = []; state.spinning = false; state.ballRf = 0.74;
+    state.history = []; state.spinning = false;
     state.ballAngle = -Math.PI / 2; state.wheelAngle = -0.5 * state.slice;
     state.pending = -1; state.lastTickSlot = -1; state.p = 0;
     els.historyList.innerHTML = ''; els.historyEmpty.hidden = false;
@@ -584,7 +571,7 @@
     var li = document.createElement('li'); li.className = type;
     var dot = document.createElement('span'); dot.className = 'dot';
     var label = document.createElement('span'); label.className = 'hist-label'; label.textContent = 'Nr ' + num;
-    var tag = document.createElement('span'); tag.className = 'hist-tag'; tag.textContent = type === 'red' ? 'czerwony' : 'czarny';
+    var tag = document.createElement('span'); tag.className = 'hist-tag'; tag.textContent = type === 'red' ? 'czerwony' : (type === 'green' ? 'zielony' : 'czarny');
     var seqEl = document.createElement('span'); seqEl.className = 'hist-seq'; seqEl.textContent = '#' + seq;
     li.appendChild(dot); li.appendChild(label); li.appendChild(tag); li.appendChild(seqEl);
     els.historyList.prepend(li);
@@ -632,7 +619,7 @@
     g.beginPath(); g.arc(0, 0, R * 0.99, 0, TAU); g.clip();
     for (var i = 0; i < n; i++) {
       var start = i * slice - Math.PI / 2;
-      var color = (state.numbers[i] % 2 === 1) ? '#c6344a' : '#1c1c1e';
+      var color = (state.numbers[i] === 0) ? '#0e7a4e' : (state.numbers[i] % 2 === 1 ? '#c6344a' : '#1c1c1e');
       g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, R * 0.99, start, start + slice); g.closePath();
       g.fillStyle = color; g.fill();
     }
@@ -674,19 +661,6 @@
     g.fillStyle = '#d4b06a'; g.font = '600 ' + (hubR * 0.62).toFixed(2) + 'px Georgia, "Times New Roman", serif';
     g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('PS', 0, hubR * 0.02);
   }
-  function drawBall(g, S) {
-    var R = state.R, r = state.ballRf * R;
-    var br = Math.max(3, R * 0.032);
-    var x = 0, y = -r;
-    g.beginPath(); g.arc(x, y, br * 2.6, 0, TAU);
-    var glow = g.createRadialGradient(x, y, 0, x, y, br * 2.6);
-    glow.addColorStop(0, 'rgba(255,255,255,.22)'); glow.addColorStop(1, 'rgba(255,255,255,0)');
-    g.fillStyle = glow; g.fill();
-    g.beginPath(); g.arc(x, y, br, 0, TAU);
-    var ball = g.createRadialGradient(x - br * .3, y - br * .35, br * .08, x, y, br);
-    ball.addColorStop(0, '#ffffff'); ball.addColorStop(1, '#b8b8be');
-    g.fillStyle = ball; g.fill();
-  }
   function drawPointer(g, S) {
     var cx = S / 2, cy = S / 2, R = state.R;
     var tipY = cy - R * 1.02, baseY = cy - R * 1.12, half = S * 0.026;
@@ -704,7 +678,6 @@
       ctx.drawImage(state.wheelLayer, -S / 2, -S / 2, S, S); ctx.restore();
     }
     ctx.save(); ctx.translate(cx, cy); drawHub(ctx, S); ctx.restore();
-    ctx.save(); ctx.translate(cx, cy); drawBall(ctx, S); ctx.restore();
     drawPointer(ctx, S);
   }
 
@@ -757,7 +730,7 @@
     els.resultLabel.textContent = 'Wynik losowania';
     els.resultText.className = 'result-text';
     els.resultText.innerHTML = 'Ofiara <span class="num">' + num + '</span>';
-    els.resultMeta.textContent = 'numer ' + num + ', ' + (type === 'red' ? 'czerwony' : 'czarny') + ' · ' + state.history.length + '. losowanie';
+    els.resultMeta.textContent = 'numer ' + num + ', ' + (type === 'red' ? 'czerwony' : (type === 'green' ? 'zielony' : 'czarny')) + ' · ' + state.history.length + '. losowanie';
     els.resultText.classList.remove('pop'); void els.resultText.offsetWidth; els.resultText.classList.add('pop');
     els.flash.classList.remove('show'); void els.flash.offsetWidth; els.flash.classList.add('show');
     els.spinBtn.disabled = false; els.spinBtn.removeAttribute('aria-busy');
@@ -783,17 +756,6 @@
     var result = readSetup();
     if (result.error) { showError(result.error); return; }
     els.setupError.hidden = true; applyConfig(result);
-  });
-  els.cancelEditBtn.addEventListener('click', cancelEdit);
-  document.querySelectorAll('.step-btn').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var value = Number(els.victims.value); if (!Number.isFinite(value)) value = 0;
-      value = clamp(Math.round(value) + Number(btn.dataset.step), 1, 100);
-      els.victims.value = String(value);
-    });
-  });
-  els.presets.addEventListener('click', function (e) {
-    var btn = e.target.closest('.preset'); if (!btn) return; els.victims.value = btn.dataset.count;
   });
   els.spinBtn.addEventListener('click', spin);
   els.soundBtn.addEventListener('click', toggleSound);
